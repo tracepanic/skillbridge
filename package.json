@@ -11,7 +11,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
     "@ibm-cloud/watsonx-ai": "^1.6.4",
-    "@prisma/client": "6.6.0",
+    "@prisma/client": "6.7.0",
     "@radix-ui/react-alert-dialog": "^1.1.11",
     "@radix-ui/react-avatar": "^1.1.6",
     "@radix-ui/react-collapsible": "^1.1.7",

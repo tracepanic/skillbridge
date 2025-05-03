@@ -1,7 +1,7 @@
 import { PrismaClient as PrismaClientDev } from "@/prisma/generated";
 import { PrismaClient as PrismaClientEdge } from "@/prisma/generated/edge";
 
-let db: PrismaClientDev;
+let db: PrismaClientDev | PrismaClientEdge;
 
 if (process.env.NODE_ENV === "production") {
   db = new PrismaClientEdge();
@@ -9,11 +9,9 @@ if (process.env.NODE_ENV === "production") {
   const globalForPrisma = globalThis as unknown as {
     prisma?: PrismaClientDev;
   };
-
   if (!globalForPrisma.prisma) {
     globalForPrisma.prisma = new PrismaClientDev();
   }
-
   db = globalForPrisma.prisma;
 }
 

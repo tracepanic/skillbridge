@@ -1,11 +1,20 @@
-import { PrismaClient } from "@/prisma/generated";
+import { PrismaClient as PrismaClientDev } from "@/prisma/generated";
+import { PrismaClient as PrismaClientEdge } from "@/prisma/generated/edge";
 
-const globalForPrisma = global as unknown as {
-  prisma: PrismaClient;
-};
+let db: PrismaClientDev;
 
-const db = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV === "production") {
+  db = new PrismaClientEdge();
+} else {
+  const globalForPrisma = globalThis as unknown as {
+    prisma?: PrismaClientDev;
+  };
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = new PrismaClientDev();
+  }
+
+  db = globalForPrisma.prisma;
+}
 
 export default db;

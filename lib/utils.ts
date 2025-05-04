@@ -31,3 +31,19 @@ export function randomNumber(): number {
   const max = 100000;
   return Math.floor(Math.random() * max);
 }
+
+export function stripJsonCodeBlock(input: string): string {
+  return input.replace(/^```json\s*([\s\S]*?)\s*```$/i, "$1").trim();
+}
+
+export function formatSalary(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+export function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}

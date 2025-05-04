@@ -26,8 +26,13 @@ import {
 import { extractTextFromPDFUrl } from "@/lib/pdf";
 import { PromptLab } from "@/lib/prompts";
 import { CareerPathArraySchema, CareerPathSchema } from "@/lib/schemas";
-import { generateAIResponseAction, getUserCV } from "@/lib/server";
+import {
+  generateAIResponseAction,
+  getUserCV,
+  saveCareerPath,
+} from "@/lib/server";
 import { AIMessage, CVInfo } from "@/lib/types";
+import { capitalize, formatSalary, stripJsonCodeBlock } from "@/lib/utils";
 import {
   ArrowRight,
   Award,
@@ -52,6 +57,7 @@ export default function Page() {
   const [question, setQuestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [active, setActive] = useState(0);
   const [careers, setCareers] = useState<
     z.infer<typeof CareerPathSchema>[] | []
@@ -124,21 +130,29 @@ export default function Page() {
     setIsLoading(false);
   };
 
-  function stripJsonCodeBlock(input: string): string {
-    return input.replace(/^```json\s*([\s\S]*?)\s*```$/i, "$1").trim();
-  }
+  const handleSave = async (index: number) => {
+    const careerToSave = careers[index];
 
-  const formatSalary = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(amount);
+    if (!careerToSave) {
+      toast.error("Career path not found");
+    }
+
+    setSaving(true);
+    const id = toast.loading("Saving career path");
+    const res = await saveCareerPath(careerToSave);
+
+    if (res && res.success) {
+      toast.dismiss(id);
+      toast.success("Career path saved successfully");
+      setCareers((currentCareers) =>
+        currentCareers.filter((_, i) => i !== index),
+      );
+    } else {
+      toast.error("Failed to save career");
+    }
+
+    setSaving(false);
   };
-
-  function capitalize(str: string) {
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  }
 
   if (loading) {
     return (
@@ -201,6 +215,8 @@ export default function Page() {
                       variant="outline"
                       size="sm"
                       className="flex-1 cursor-pointer"
+                      disabled={saving}
+                      onClick={() => handleSave(index)}
                     >
                       <Save className="h-4 w-4 mr-1" /> Save
                     </Button>

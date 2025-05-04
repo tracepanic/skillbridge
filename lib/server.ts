@@ -3,6 +3,7 @@
 import { db } from "@/db/drizzle";
 import {
   applications,
+  careerPaths,
   chats,
   cvInfos,
   jobs,
@@ -12,7 +13,12 @@ import {
 import { env } from "@/env";
 import { CurrentChat } from "@/lib/chat.store";
 import { PromptLab } from "@/lib/prompts";
-import { CreateJobsSchema, LoginSchema, SignupSchema } from "@/lib/schemas";
+import {
+  CareerPathSchema,
+  CreateJobsSchema,
+  LoginSchema,
+  SignupSchema,
+} from "@/lib/schemas";
 import { createSession, getSession } from "@/lib/session";
 import {
   AIMessage,
@@ -653,6 +659,65 @@ export async function fetchMyJobDetails(
     return {
       success: false,
       message: "Failed to fetch my job details",
+    };
+  }
+}
+
+export async function saveCareerPath(
+  values: z.infer<typeof CareerPathSchema>,
+): Promise<ServerActionRes<undefined>> {
+  try {
+    const user = await getSession();
+    if (!user) {
+      return {
+        success: false,
+        message: "User not found",
+      };
+    }
+
+    const data = CareerPathSchema.parse(values);
+
+    const result = await db
+      .insert(careerPaths)
+      .values({
+        title: data.title,
+        description: data.description,
+        confidenceScore: data.confidenceScore,
+        level: data.level as "beginner" | "intermediate" | "advanced",
+        domain: data.domain,
+        estimatedTimeToEntry: data.estimatedTimeToEntry,
+        salaryRangeMin: data.salaryRangeUSD.min,
+        salaryRangeMax: data.salaryRangeUSD.max,
+        growthOutlook: data.growthOutlook as "low" | "moderate" | "high",
+        relevanceReasons: data.relevanceReasons,
+        jobTitles: data.jobTitles,
+        requiredSkills: data.requiredSkills,
+        optionalSkills: data.optionalSkills || [],
+        certifications: data.certifications || [],
+        relatedPaths: data.relatedPaths,
+        userId: user.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    if (!result || result.length === 0) {
+      return {
+        success: false,
+        message: "Failed to create career path",
+      };
+    }
+
+    return {
+      success: true,
+      message: "Success",
+      data: undefined,
+    };
+  } catch (error) {
+    console.log(error);
+    return {
+      success: false,
+      message: "Failed to create career path",
     };
   }
 }

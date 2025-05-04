@@ -8,7 +8,7 @@ import { fetchMyJobDetails } from "@/lib/server";
 import { JobsWithApplications } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
 import { Building, Calendar, DollarSign, MapPin, Users } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -16,6 +16,7 @@ export default function Page() {
   const [job, setJob] = useState<JobsWithApplications | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const router = useRouter();
   const params = useParams<{ id: string | string[] }>();
   const jobId: number | undefined = Array.isArray(params.id)
     ? params.id[0] !== undefined
@@ -43,8 +44,6 @@ export default function Page() {
     })();
   }, [jobId]);
 
-  const toggleJobStatus = () => {};
-
   if (loading) {
     return (
       <div className="w-full h-fit">
@@ -54,7 +53,9 @@ export default function Page() {
   }
 
   if (!job) {
-    return null;
+    toast.error("Job not found");
+    router.push("/dashboard/jobs/my-jobs");
+    return;
   }
 
   return (

@@ -33,6 +33,7 @@ const navs = [
     title: "Careers",
     url: "/dashboard/careers",
     icon: GraduationCap,
+    isActive: true,
     items: [{ title: "Generate", url: "/dashboard/career/generate" }],
   },
   {

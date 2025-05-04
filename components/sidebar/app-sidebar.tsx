@@ -30,8 +30,8 @@ const navs = [
     icon: House,
   },
   {
-    title: "Careers",
-    url: "/dashboard/careers",
+    title: "Career",
+    url: "/dashboard/career",
     icon: GraduationCap,
     isActive: true,
     items: [{ title: "Generate", url: "/dashboard/career/generate" }],

@@ -22,6 +22,7 @@ import {
 import { createSession, getSession } from "@/lib/session";
 import {
   AIMessage,
+  CareerPath,
   Chat,
   CVInfo,
   JobsWithApplicationCount,
@@ -718,6 +719,39 @@ export async function saveCareerPath(
     return {
       success: false,
       message: "Failed to create career path",
+    };
+  }
+}
+
+export async function fetchCareerPaths(): Promise<
+  ServerActionRes<CareerPath[]>
+> {
+  try {
+    const user = await getSession();
+    if (!user) {
+      return {
+        success: false,
+        message: "User not found",
+      };
+    }
+
+    const careers = await db
+      .select()
+      .from(careerPaths)
+      .where(eq(careerPaths.userId, user.id))
+      .orderBy(desc(careerPaths.createdAt))
+      .execute();
+
+    return {
+      success: true,
+      message: "Success",
+      data: careers,
+    };
+  } catch (error) {
+    console.log(error);
+    return {
+      success: false,
+      message: "Failed to load career paths",
     };
   }
 }

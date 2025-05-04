@@ -1,5 +1,6 @@
 import {
   applications,
+  careerPaths,
   chats,
   cvInfos,
   jobs,
@@ -14,6 +15,7 @@ export type Application = InferSelectModel<typeof applications>;
 export type Chat = InferSelectModel<typeof chats>;
 export type Message = InferSelectModel<typeof messages>;
 export type CVInfo = InferSelectModel<typeof cvInfos>;
+export type CareerPath = InferSelectModel<typeof careerPaths>;
 
 export interface AIMessage {
   role: "user" | "assistant";

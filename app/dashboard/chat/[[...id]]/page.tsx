@@ -18,7 +18,11 @@ export default function Page() {
 
   const params = useParams();
   const router = useRouter();
-  const chatId = Array.isArray(params.id) ? params.id[0] : undefined;
+  const chatId: number | undefined = Array.isArray(params.id)
+    ? params.id[0] !== undefined && !isNaN(Number(params.id[0]))
+      ? +params.id[0]
+      : undefined
+    : undefined;
 
   const {
     startNewChat,

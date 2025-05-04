@@ -43,7 +43,7 @@ export default function LoginPage() {
   const onSubmit = async (values: z.infer<typeof SignupSchema>) => {
     const res = await signup(values);
 
-    if (res.success) {
+    if (res && res.success) {
       toast.success("Account created successfully");
       router.push("/login");
     } else {
@@ -128,7 +128,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full mt-5"
+                className="w-full mt-5 cursor-pointer"
                 loading={form.formState.isSubmitting}
               >
                 Signup

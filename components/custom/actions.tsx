@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Message } from "@/prisma/generated";
+import { Message } from "@/lib/types";
 import { Check, Copy, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useState } from "react";
 

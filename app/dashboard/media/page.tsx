@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { deleteCV, getUserCV, updateOrCreateCV } from "@/lib/server";
-import { CVInfo } from "@/prisma/generated";
+import { CVInfo } from "@/lib/types";
 import { deleteUploadthingCV } from "@/server/upladthing";
 import { useUploadThing } from "@/utils/uploadthing";
 import { useDropzone } from "@uploadthing/react";

@@ -1,5 +1,4 @@
-import { AIMessage } from "@/lib/schemas";
-import { Message } from "@/prisma/generated";
+import { AIMessage, Message } from "@/lib/types";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -26,4 +25,9 @@ export function fromMessagesToAI(messages: Message[]): AIMessage[] {
     role: message.role,
     content: message.content,
   }));
+}
+
+export function randomNumber(): number {
+  const max = 100000;
+  return Math.floor(Math.random() * max);
 }

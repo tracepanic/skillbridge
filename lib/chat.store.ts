@@ -1,4 +1,3 @@
-import { AIMessage } from "@/lib/schemas";
 import {
   createNewChat,
   fetchChats,
@@ -6,9 +5,9 @@ import {
   generateChatTitle,
   updateMessagesToDB,
 } from "@/lib/server";
-import { Chat, Message } from "@/prisma/generated";
+import { AIMessage, Chat, Message } from "@/lib/types";
+import { randomNumber } from "@/lib/utils";
 import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
 import { create } from "zustand";
 
 export interface CurrentChat extends Chat {
@@ -26,7 +25,7 @@ interface ChatState {
 
 interface ChatActions {
   loadChats: () => Promise<void>;
-  loadSpecificChat: (id: string) => Promise<void>;
+  loadSpecificChat: (id: number) => Promise<void>;
   startNewChat: (input: string) => void;
   getCurrentChatMessages: () => Message[] | [];
   addMessageToCurrentChat: (message: AIMessage) => void;
@@ -57,7 +56,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     set({ currentChat: null });
   },
 
-  loadSpecificChat: async (id: string) => {
+  loadSpecificChat: async (id: number) => {
     set({ isLoadingThisChat: true });
 
     const res = await fetchSpecificChat(id);
@@ -72,9 +71,9 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   },
 
   startNewChat: (input: string) => {
-    const id = uuidv4();
+    const id = randomNumber();
     const newUserMessage: Message = {
-      id: uuidv4(),
+      id: randomNumber(),
       chatId: id,
       content: input,
       role: "user",
@@ -87,7 +86,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
       title: "New chat",
       saved: false,
       messages: [newUserMessage],
-      userId: "",
+      userId: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -157,7 +156,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
           currentChat: {
             ...state.currentChat!,
             saved: true,
-            id: res.data as string,
+            id: res.data as number,
           },
         };
       });
@@ -171,7 +170,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
       }
 
       const fullMessage: Message = {
-        id: uuidv4(),
+        id: randomNumber(),
         chatId: state.currentChat.id,
         content: message.content,
         role: message.role,
@@ -215,7 +214,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     }
 
     const fullMessage: Message = {
-      id: uuidv4(),
+      id: randomNumber(),
       chatId: currentChat.id,
       content: message.content,
       role: message.role,

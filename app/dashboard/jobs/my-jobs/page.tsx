@@ -18,8 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { JobsWithApplicationCount } from "@/lib/schemas";
 import { fetchMyJobs } from "@/lib/server";
+import { JobsWithApplicationCount } from "@/lib/types";
 import {
   ColumnDef,
   flexRender,

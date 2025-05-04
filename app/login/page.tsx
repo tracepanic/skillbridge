@@ -41,7 +41,7 @@ export default function LoginPage() {
   const onSubmit = async (values: z.infer<typeof LoginSchema>) => {
     const res = await login(values);
 
-    if (res.success) {
+    if (res && res.success) {
       toast.success("Logged in successfully");
       router.push("/dashboard");
     } else {
@@ -96,7 +96,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full mt-5"
+                className="w-full mt-5 cursor-pointer"
                 loading={form.formState.isSubmitting}
               >
                 Login

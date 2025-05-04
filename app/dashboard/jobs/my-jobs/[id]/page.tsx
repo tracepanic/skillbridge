@@ -1,24 +1,14 @@
 "use client";
 
 import { Loader } from "@/components/custom/loader";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { JobsWithApplications } from "@/lib/schemas";
 import { fetchMyJobDetails } from "@/lib/server";
+import { JobsWithApplications } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
-import {
-  ArrowLeft,
-  Building,
-  Calendar,
-  DollarSign,
-  MapPin,
-  Users,
-} from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { Building, Calendar, DollarSign, MapPin, Users } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -26,13 +16,22 @@ export default function Page() {
   const [job, setJob] = useState<JobsWithApplications | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const router = useRouter();
-  const params = useParams();
-  const jobId = params.id as string;
+  const params = useParams<{ id: string | string[] }>();
+  const jobId: number | undefined = Array.isArray(params.id)
+    ? params.id[0] !== undefined
+      ? Number(params.id[0])
+      : undefined
+    : params.id !== undefined
+      ? Number(params.id)
+      : undefined;
 
   useEffect(() => {
     (async function fetchJobDetails() {
-      const res = await fetchMyJobDetails(jobId);
+      if (!jobId) {
+        toast.error("Failed to fetch job details");
+      }
+
+      const res = await fetchMyJobDetails(jobId ?? -1);
 
       if (res && res.data && res.success) {
         setJob(res.data);

@@ -1,65 +1,117 @@
 "use server";
 
+import { db } from "@/db/drizzle";
+import {
+  applications,
+  chats,
+  cvInfos,
+  jobs,
+  messages,
+  users,
+} from "@/db/schema";
 import { env } from "@/env";
 import { CurrentChat } from "@/lib/chat.store";
-import db from "@/lib/db";
 import { PromptLab } from "@/lib/prompts";
+import { CreateJobsSchema, LoginSchema, SignupSchema } from "@/lib/schemas";
+import { createSession, getSession } from "@/lib/session";
 import {
   AIMessage,
-  CreateJobsSchema,
+  Chat,
+  CVInfo,
   JobsWithApplicationCount,
   JobsWithApplications,
-  LoginSchema,
   ServerActionRes,
-  SignupSchema,
-} from "@/lib/schemas";
-import { createSession, getSession } from "@/lib/session";
+} from "@/lib/types";
 import { createWatsonXAIService } from "@/lib/watsonx";
-import { Chat, CVInfo } from "@/prisma/generated";
 import * as argon from "argon2";
+import { and, asc, count, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 const promptLab = new PromptLab();
 
 export async function signup(
   values: z.infer<typeof SignupSchema>,
-): Promise<{ success: boolean }> {
+): Promise<ServerActionRes<undefined>> {
   try {
     const data = SignupSchema.parse(values);
 
-    const res = await db.user.create({
-      data: { ...data, password: await argon.hash(data.password) },
-    });
+    const hashedPassword = await argon.hash(data.password);
 
-    return { success: !!res };
+    const res = await db
+      .insert(users)
+      .values({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        password: hashedPassword,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    if (!res) {
+      return {
+        success: false,
+        message: "Failed to create user",
+      };
+    }
+
+    return {
+      success: true,
+      message: "Success",
+      data: undefined,
+    };
   } catch (error) {
     console.log(error);
-    return { success: false };
+    return {
+      success: false,
+      message: "Failed to create user",
+    };
   }
 }
 
 export async function login(
   values: z.infer<typeof LoginSchema>,
-): Promise<{ success: boolean }> {
+): Promise<ServerActionRes<undefined>> {
   try {
     const data = LoginSchema.parse(values);
 
-    const user = await db.user.findUnique({
-      where: { email: data.email },
-    });
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, data.email))
+      .limit(1)
+      .execute();
 
-    if (!user) return { success: false };
+    if (!user || user.length === 0) {
+      return {
+        success: false,
+        message: "Invalid credentials",
+      };
+    }
 
-    const isPasswordValid = await argon.verify(user.password, data.password);
+    const isPasswordValid = await argon.verify(user[0].password, data.password);
 
-    if (!isPasswordValid) return { success: false };
+    if (!isPasswordValid) {
+      return {
+        success: false,
+        message: "Invalid credentials",
+      };
+    }
 
-    await createSession(user);
+    await createSession(user[0]);
 
-    return { success: true };
+    return {
+      success: true,
+      message: "Success",
+      data: undefined,
+    };
   } catch (error) {
     console.log(error);
-    return { success: false };
+    return {
+      success: false,
+      message: "Invalid credentials",
+    };
   }
 }
 
@@ -73,11 +125,14 @@ export async function fetchChats(): Promise<ServerActionRes<Chat[]>> {
       };
     }
 
-    const chats = await db.chat.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-    });
-    if (!chats) {
+    const allChats = await db
+      .select()
+      .from(chats)
+      .where(eq(chats.userId, user.id))
+      .orderBy(desc(chats.createdAt))
+      .execute();
+
+    if (!allChats) {
       return {
         success: false,
         message: "Chats not found",
@@ -87,7 +142,7 @@ export async function fetchChats(): Promise<ServerActionRes<Chat[]>> {
     return {
       success: true,
       message: "Success",
-      data: chats,
+      data: allChats,
     };
   } catch (error) {
     console.log(error);
@@ -160,9 +215,9 @@ export async function generateChatTitle(
 
 export async function createNewChat(
   chat: CurrentChat,
-): Promise<ServerActionRes<string>> {
+): Promise<ServerActionRes<number>> {
   try {
-    const messages = chat.messages;
+    const userMessages = chat.messages;
     const user = await getSession();
     if (!user) {
       return {
@@ -171,29 +226,43 @@ export async function createNewChat(
       };
     }
 
-    if (!messages || messages.length !== 2) {
+    if (!userMessages || userMessages.length !== 2) {
       return {
         success: false,
         message: "Invalid messages",
       };
     }
 
-    const res = await db.chat.create({
-      data: {
+    const res = await db
+      .insert(chats)
+      .values({
         title: chat.title,
         userId: user.id,
-        messages: {
-          createMany: {
-            data: [
-              { role: messages[0].role, content: messages[0].content },
-              { role: messages[1].role, content: messages[1].content },
-            ],
-          },
-        },
-      },
-    });
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning({ id: chats.id });
 
-    if (!res) {
+    const chatId = res[0].id;
+
+    await db.insert(messages).values([
+      {
+        role: userMessages[0].role,
+        content: userMessages[0].content,
+        chatId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        role: userMessages[1].role,
+        content: userMessages[1].content,
+        chatId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+
+    if (!chatId) {
       return {
         success: false,
         message: "Failed to create chat",
@@ -203,7 +272,7 @@ export async function createNewChat(
     return {
       success: true,
       message: "Success",
-      data: res.id,
+      data: chatId,
     };
   } catch (error) {
     console.log(error);
@@ -215,7 +284,7 @@ export async function createNewChat(
 }
 
 export async function updateMessagesToDB(
-  chatId: string,
+  chatId: number,
   message: AIMessage,
 ): Promise<ServerActionRes<undefined>> {
   try {
@@ -227,13 +296,16 @@ export async function updateMessagesToDB(
       };
     }
 
-    const res = await db.message.create({
-      data: {
+    const res = await db
+      .insert(messages)
+      .values({
         role: message.role,
         content: message.content,
         chatId,
-      },
-    });
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
 
     if (!res) {
       return {
@@ -257,7 +329,7 @@ export async function updateMessagesToDB(
 }
 
 export async function fetchSpecificChat(
-  chatId: string,
+  chatId: number,
 ): Promise<ServerActionRes<CurrentChat>> {
   try {
     const user = await getSession();
@@ -268,22 +340,31 @@ export async function fetchSpecificChat(
       };
     }
 
-    const res = await db.chat.findUnique({
-      where: { id: chatId, user: { id: user.id } },
-      include: { messages: { orderBy: { createdAt: "asc" } } },
-    });
+    const chat = await db
+      .select()
+      .from(chats)
+      .where(and(eq(chats.id, chatId), eq(chats.userId, user.id)))
+      .limit(1)
+      .execute();
 
-    if (!res) {
+    if (!chat || chat.length === 0) {
       return {
         success: false,
-        message: "Failed to fetch chat",
+        message: "Chat not found",
       };
     }
+
+    const chatMessages = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.chatId, chatId))
+      .orderBy(asc(messages.createdAt))
+      .execute();
 
     return {
       success: true,
       message: "Success",
-      data: { ...res, saved: true },
+      data: { ...chat[0], messages: chatMessages, saved: true },
     };
   } catch (error) {
     console.log(error);
@@ -304,12 +385,17 @@ export async function getUserCV(): Promise<ServerActionRes<CVInfo | null>> {
       };
     }
 
-    const res = await db.cVInfo.findUnique({ where: { userId: user.id } });
+    const cv = await db
+      .select()
+      .from(cvInfos)
+      .where(eq(cvInfos.userId, user.id))
+      .limit(1)
+      .execute();
 
     return {
       success: true,
       message: "Success",
-      data: res,
+      data: cv.length > 0 ? cv[0] : null,
     };
   } catch (error) {
     console.log(error);
@@ -336,13 +422,39 @@ export async function updateOrCreateCV({
       };
     }
 
-    const res = await db.cVInfo.upsert({
-      where: { userId: user.id },
-      create: { name, ufsUrl, userId: user.id },
-      update: { name, ufsUrl, userId: user.id },
-    });
+    const existingCV = await db
+      .select()
+      .from(cvInfos)
+      .where(eq(cvInfos.userId, user.id))
+      .limit(1)
+      .execute();
 
-    if (!res) {
+    let result;
+
+    if (existingCV.length > 0) {
+      result = await db
+        .update(cvInfos)
+        .set({
+          name,
+          ufsUrl,
+          updatedAt: new Date(),
+        })
+        .where(eq(cvInfos.userId, user.id))
+        .returning();
+    } else {
+      result = await db
+        .insert(cvInfos)
+        .values({
+          name,
+          ufsUrl,
+          userId: user.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+    }
+
+    if (!result || result.length === 0) {
       return {
         success: false,
         message: "Failed to update CV",
@@ -352,7 +464,7 @@ export async function updateOrCreateCV({
     return {
       success: true,
       message: "Success",
-      data: res,
+      data: result[0],
     };
   } catch (error) {
     console.log(error);
@@ -373,9 +485,12 @@ export async function deleteCV(): Promise<ServerActionRes<undefined>> {
       };
     }
 
-    const res = await db.cVInfo.delete({ where: { userId: user.id } });
+    const result = await db
+      .delete(cvInfos)
+      .where(eq(cvInfos.userId, user.id))
+      .returning();
 
-    if (!res) {
+    if (!result || result.length === 0) {
       return {
         success: false,
         message: "Failed to delete CV",
@@ -408,30 +523,31 @@ export async function fetchMyJobs(): Promise<
       };
     }
 
-    const res = await db.job.findMany({
-      where: {
-        postedById: user.id,
-      },
-      include: {
-        _count: {
-          select: {
-            applications: true,
-          },
-        },
-      },
-    });
+    const userJobs = await db
+      .select()
+      .from(jobs)
+      .where(eq(jobs.postedById, user.id))
+      .execute();
 
-    const jobsWithApplicationCount: JobsWithApplicationCount[] = res.map(
-      (job) => ({
+    const jobsWithCounts: JobsWithApplicationCount[] = [];
+
+    for (const job of userJobs) {
+      const applicationCount = await db
+        .select({ count: count() })
+        .from(applications)
+        .where(eq(applications.jobId, job.id))
+        .execute();
+
+      jobsWithCounts.push({
         ...job,
-        applications: job._count.applications,
-      }),
-    );
+        applications: applicationCount[0]?.count || 0,
+      });
+    }
 
     return {
       success: true,
       message: "Success",
-      data: jobsWithApplicationCount,
+      data: jobsWithCounts,
     };
   } catch (error) {
     console.log(error);
@@ -456,15 +572,22 @@ export async function createJob(
 
     const data = CreateJobsSchema.parse(values);
 
-    const res = await db.job.create({
-      data: {
-        ...data,
-        postedById: user.id,
+    const result = await db
+      .insert(jobs)
+      .values({
+        title: data.title,
+        description: data.description,
+        location: data.location,
+        salary: data.salary,
+        company: data.company,
         status: data.status ? "open" : "closed",
-      },
-    });
+        postedById: user.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
 
-    if (!res) {
+    if (!result || result.length === 0) {
       return {
         success: false,
         message: "Failed to create job",
@@ -486,7 +609,7 @@ export async function createJob(
 }
 
 export async function fetchMyJobDetails(
-  jobId: string,
+  jobId: number,
 ): Promise<ServerActionRes<JobsWithApplications | null>> {
   try {
     const user = await getSession();
@@ -497,15 +620,33 @@ export async function fetchMyJobDetails(
       };
     }
 
-    const res = await db.job.findUnique({
-      where: { postedById: user.id, id: jobId },
-      include: { applications: true },
-    });
+    const job = await db
+      .select()
+      .from(jobs)
+      .where(and(eq(jobs.id, jobId), eq(jobs.postedById, user.id)))
+      .limit(1)
+      .execute();
+
+    if (!job || job.length === 0) {
+      return {
+        success: false,
+        message: "Job not found",
+      };
+    }
+
+    const jobApplications = await db
+      .select()
+      .from(applications)
+      .where(eq(applications.jobId, jobId))
+      .execute();
 
     return {
       success: true,
       message: "Success",
-      data: res,
+      data: {
+        ...job[0],
+        applications: jobApplications,
+      },
     };
   } catch (error) {
     console.log(error);

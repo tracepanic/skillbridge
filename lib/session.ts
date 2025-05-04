@@ -2,7 +2,7 @@
 
 import { env } from "@/env";
 import { SessionSchema } from "@/lib/schemas";
-import { User } from "@/prisma/generated";
+import { User } from "@/lib/types";
 import { jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
 import { z } from "zod";

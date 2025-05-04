@@ -25,13 +25,9 @@ import {
 } from "@/components/ui/sheet";
 import { extractTextFromPDFUrl } from "@/lib/pdf";
 import { PromptLab } from "@/lib/prompts";
-import {
-  AIMessage,
-  CareerPathArraySchema,
-  CareerPathSchema,
-} from "@/lib/schemas";
+import { CareerPathArraySchema, CareerPathSchema } from "@/lib/schemas";
 import { generateAIResponseAction, getUserCV } from "@/lib/server";
-import { CVInfo } from "@/prisma/generated";
+import { AIMessage, CVInfo } from "@/lib/types";
 import {
   ArrowRight,
   Award,

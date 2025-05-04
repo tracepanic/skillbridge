@@ -1,6 +1,6 @@
 import { MessageActions } from "@/components/custom/actions";
 import { Markdown } from "@/components/custom/markdown";
-import { Message } from "@/prisma/generated";
+import { Message } from "@/lib/types";
 import { cx } from "classix";
 import { motion } from "framer-motion";
 import { SparklesIcon } from "lucide-react";

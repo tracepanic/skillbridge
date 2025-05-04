@@ -1,4 +1,3 @@
-import { Application, Job } from "@/prisma/generated";
 import { z } from "zod";
 
 export const SignupSchema = z.object({
@@ -14,7 +13,7 @@ export const LoginSchema = z.object({
 });
 
 export const SessionSchema = z.object({
-  id: z.string().uuid(),
+  id: z.number(),
   name: z.string().min(3).max(255),
   email: z.string().email().min(5).max(255),
 });
@@ -62,22 +61,3 @@ export const CareerPathSchema = z.object({
 });
 
 export const CareerPathArraySchema = z.array(CareerPathSchema).min(1);
-
-export interface AIMessage {
-  role: "user" | "assistant";
-  content: string;
-}
-
-export interface ServerActionRes<T> {
-  success: boolean;
-  message: string;
-  data?: T;
-}
-
-export interface JobsWithApplications extends Job {
-  applications: Application[];
-}
-
-export interface JobsWithApplicationCount extends Job {
-  applications: number;
-}

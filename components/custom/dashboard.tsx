@@ -91,7 +91,9 @@ export function ListItem({
       <div className="flex items-center space-x-3">
         <Icon />
         <div className="flex-1">
-          <p className="text-sm font-medium leading-none">{title}</p>
+          <p className="text-sm font-medium line-clamp-1 leading-none">
+            {title}
+          </p>
           {description && (
             <p className="text-xs text-muted-foreground pt-1">{description}</p>
           )}

@@ -93,7 +93,7 @@ importers:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       prisma:
-        specifier: ^6.7.0
+        specifier: ^6.6.0
         version: 6.7.0(typescript@5.8.3)
       react:
         specifier: ^19.0.0
@@ -123,7 +123,7 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       tw-animate-css:
-        specifier: ^1.2.5
+        specifier: ^1.2.9
         version: 1.2.9
       uploadthing:
         specifier: ^7.6.0
@@ -3850,7 +3850,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.9.0)
+      retry-axios: 2.6.0(axios@1.9.0(debug@4.4.0))
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -4707,7 +4707,7 @@ snapshots:
 
   requires-port@1.0.0: {}
 
-  retry-axios@2.6.0(axios@1.9.0):
+  retry-axios@2.6.0(axios@1.9.0(debug@4.4.0)):
     dependencies:
       axios: 1.9.0(debug@4.4.0)
 

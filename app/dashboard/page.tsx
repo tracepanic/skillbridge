@@ -197,7 +197,7 @@ export default function Page() {
                     key={path.id}
                     id={path.id}
                     title={path.title}
-                    description={`Confidence: ${path.confidenceScore}% | Generated ${formatDistanceToNow(path.createdAt, { addSuffix: true })}`}
+                    description={`Confidence: ${path.confidenceScore}/10 | Generated ${formatDistanceToNow(path.createdAt, { addSuffix: true })}`}
                     icon={Network}
                     actionHref="/dashboard/career"
                     tags={[

@@ -38,7 +38,7 @@ export class PromptLab {
         *   \`description\`: A 3-4 sentence summary of the role and responsibilities.
         *   \`confidenceScore\`: An integer between 1 and 10. 10 indicates a very strong match based on the user's skills and background. Provide a score that genuinely reflects the suitability.
         *   \`relevanceReasons\`: An array of 3-5 strings explaining *why* this career path is a good fit for the user, specifically referencing aspects of their resume and/or extra info.
-        *   \`level\`: The typical entry level for this path ("beginner", "intermediate", or "advanced"). "Beginner" typically requires foundational knowledge or entry-level experience.
+        *   \`level\`: The typical entry level for this path ("beginner", "intermediate", or "advanced"). "Beginner" typically requires foundational knowledge or entry-level experience. Just one level out of the three. Its one word like beginner, intermediate, or advanced.
         *   \`domain\`: The primary industry or functional area (e.g., "Artificial Intelligence & Data", "Software Engineering", "Cybersecurity", "Marketing", "Healthcare").
         *   \`estimatedTimeToEntry\`: A realistic time range required to acquire necessary skills and enter this field (e.g., "3-6 months", "1-2 years", "4+ years").
         *   \`salaryRangeUSD\`: An estimated annual salary range in USD. Provide realistic ranges based on typical entry to mid-level salaries in the current market.

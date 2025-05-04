@@ -8,6 +8,7 @@ import {
   users,
 } from "@/db/schema";
 import { InferSelectModel } from "drizzle-orm";
+import { LucideIcon } from "lucide-react";
 
 export type User = InferSelectModel<typeof users>;
 export type Job = InferSelectModel<typeof jobs>;
@@ -34,4 +35,20 @@ export interface JobsWithApplications extends Job {
 
 export interface JobsWithApplicationCount extends Job {
   applications: number;
+}
+
+export interface StatusCardProps {
+  title: string;
+  status: "positive" | "negative" | "neutral";
+  message: string;
+  action?: React.ReactNode;
+}
+
+export interface ListItemProps {
+  id: number;
+  title: string;
+  description?: string;
+  icon: LucideIcon;
+  actionHref: string;
+  tags?: React.ReactNode[];
 }

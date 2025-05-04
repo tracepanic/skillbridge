@@ -1,80 +1,246 @@
-import { getSession } from "@/lib/session";
-import { redirect } from "next/navigation";
-import { FaBook, FaCertificate, FaChartBar } from "react-icons/fa";
+"use client";
 
-export default async function Page() {
-  const user = await getSession();
-  if (!user) redirect("/login");
+import {
+  DashboardSkeleton,
+  ListItem,
+  StatusCard,
+} from "@/components/custom/dashboard";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { fetchCareerPaths, fetchChats, getUserCV } from "@/lib/server";
+import { getSession, Session } from "@/lib/session";
+import { CareerPath, Chat, CVInfo } from "@/lib/types";
+import { formatDistanceToNow } from "date-fns";
+import { ArrowRight, MessageSquare, Network, UploadCloud } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+export default function Page() {
+  const [user, setUser] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [cv, setCv] = useState<CVInfo | null>(null);
+  const [chats, setChats] = useState<Chat[] | []>([]);
+  const [careers, setCareers] = useState<CareerPath[] | []>([]);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    (async function loadData() {
+      const user = await getSession();
+      if (!user) {
+        router.push("/login");
+      }
+
+      setUser(user);
+      await loadAllData();
+
+      setLoading(false);
+    })();
+  }, []);
+
+  const loadAllData = async () => {
+    const [cv, chats, careers] = await Promise.all([
+      getUserCV(),
+      fetchChats(),
+      fetchCareerPaths(),
+    ]);
+
+    setCv(cv.data ?? null);
+    setChats(chats.data ?? []);
+    setCareers(careers.data ?? []);
+  };
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
+  if (!user) {
+    toast.error("Failed to load dashboard data");
+    return null;
+  }
 
   return (
-    <div className="min-h-screen">
-      <div className="p-8">
-        <h1 className="text-4xl font-bold text-gray-800 mb-8">
-          Welcome back, {user.name}
-        </h1>
-
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card
-            title="Your Progress"
-            description="You've completed 3 out of 5 courses. Keep it up!"
-            icon={<FaChartBar size={28} className="text-blue-600" />}
-          />
-          <Card
-            title="New Courses"
-            description="Explore new community-focused courses."
-            icon={<FaBook size={28} className="text-purple-600" />}
-          />
-          <Card
-            title="Certificates"
-            description="View and download your verified certificates."
-            icon={<FaCertificate size={28} className="text-yellow-500" />}
-          />
-        </section>
-
-        <section className="mt-12">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-6">
-            Available Courses
-          </h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { title: "Basic Computer Skills", level: "Beginner" },
-              { title: "Digital Marketing", level: "Intermediate" },
-              { title: "Creative Thinking", level: "All Levels" },
-            ].map((course, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all p-6 border border-gray-100"
-              >
-                <h3 className="text-lg font-bold text-gray-800 mb-2">
-                  {course.title}
-                </h3>
-                <p className="text-sm text-gray-500 mb-4">{course.level}</p>
-                <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full text-sm">
-                  Start Course
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
+    <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
+      <div className="flex items-center justify-between space-x-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            Welcome back, {user.name.split(" ")[0]}!
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Here's your personalized dashboard overview.
+          </p>
+        </div>
       </div>
-    </div>
-  );
-}
 
-function Card({
-  title,
-  description,
-  icon,
-}: {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="p-6 bg-white rounded-2xl shadow-xl border border-gray-100 transition-all hover:shadow-2xl">
-      <div className="mb-3">{icon}</div>
-      <h2 className="text-lg font-semibold text-gray-800 mb-1">{title}</h2>
-      <p className="text-sm text-gray-600">{description}</p>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <StatusCard
+          title="Your CV/Resume"
+          status={cv ? "positive" : "negative"}
+          message={
+            cv
+              ? `Last updated ${formatDistanceToNow(cv.updatedAt, { addSuffix: true })}`
+              : "No CV uploaded yet. Upload one in the media page."
+          }
+          action={
+            cv ? (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={cv.ufsUrl} target="_blank">
+                  View your resume <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            ) : (
+              <Button size="sm" asChild>
+                <Link href="/dashboard/media">
+                  <UploadCloud className="mr-2 h-4 w-4" /> Upload CV
+                </Link>
+              </Button>
+            )
+          }
+        />
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">AI Assistant</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-3">
+              Chat with SkillBridge AI about your career
+            </p>
+            <Button size="sm" asChild>
+              <Link href="/dashboard/chat">
+                <MessageSquare className="mr-2 h-4 w-4" /> Start New Chat
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              Career Exploration
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-3">
+              Discover potential career paths tailored to you.
+            </p>
+            <Button size="sm" asChild>
+              <Link href="/dashboard/career">
+                <Network className="mr-2 h-4 w-4" /> Career Paths
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Chats</CardTitle>
+            <CardDescription>
+              Continue your conversations with the AI assistant.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {chats.length > 0 ? (
+              <div className="space-y-2">
+                {chats.slice(0, 5).map((chat) => (
+                  <ListItem
+                    key={chat.id}
+                    id={chat.id}
+                    title={chat.title}
+                    description={`Last message ${formatDistanceToNow(chat.updatedAt, { addSuffix: true })}`}
+                    icon={MessageSquare}
+                    actionHref={`/dashboard/chat/${chat.id}`}
+                  />
+                ))}
+                {chats.length > 5 && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="w-full justify-center"
+                    asChild
+                  >
+                    <Link href="/dashboard/chat">View All Chats</Link>
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No recent chats found.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Career Paths</CardTitle>
+            <CardDescription>
+              Review the career paths generated for you.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {careers.length > 0 ? (
+              <div className="space-y-2">
+                {careers.slice(0, 5).map((path) => (
+                  <ListItem
+                    key={path.id}
+                    id={path.id}
+                    title={path.title}
+                    description={`Confidence: ${path.confidenceScore}% | Generated ${formatDistanceToNow(path.createdAt, { addSuffix: true })}`}
+                    icon={Network}
+                    actionHref="/dashboard/career"
+                    tags={[
+                      <Badge
+                        key="level"
+                        variant="outline"
+                        className="capitalize"
+                      >
+                        {path.level}
+                      </Badge>,
+                      <Badge
+                        key="growth"
+                        variant={
+                          path.growthOutlook === "high"
+                            ? "default"
+                            : "secondary"
+                        }
+                        className="capitalize bg-opacity-80"
+                      >
+                        {path.growthOutlook} Growth
+                      </Badge>,
+                    ]}
+                  />
+                ))}
+                {careers.length > 5 && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="w-full justify-center"
+                    asChild
+                  >
+                    <Link href="/dashboard/career">View All Paths</Link>
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No career paths generated yet.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

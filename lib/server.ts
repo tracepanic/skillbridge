@@ -137,6 +137,7 @@ export async function fetchChats(): Promise<ServerActionRes<Chat[]>> {
       .from(chats)
       .where(eq(chats.userId, user.id))
       .orderBy(desc(chats.createdAt))
+      .limit(10)
       .execute();
 
     if (!allChats) {

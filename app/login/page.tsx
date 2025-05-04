@@ -1,5 +1,6 @@
 "use client";
 
+import { Header } from "@/components/custom/header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -51,66 +52,73 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full h-dvh flex items-center justify-center bg-primary">
-      <Card className="max-w-md w-full mx-auto px-4 mt-10">
-        <CardHeader>
-          <CardTitle className="text-2xl font-semibold">Login</CardTitle>
-          <CardDescription>
-            Enter your email and password to login
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="john_doe@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <>
+      <Header />
 
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Enter password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button
-                type="submit"
-                className="w-full mt-5 cursor-pointer"
-                loading={form.formState.isSubmitting}
+      <div className="w-full">
+        <Card className="max-w-md mb-36 w-full mx-auto px-4 mt-10">
+          <CardHeader>
+            <CardTitle className="text-2xl font-semibold">Login</CardTitle>
+            <CardDescription>
+              Enter your email and password to login
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-5"
               >
-                Login
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-        <CardFooter className="flex justify-center gap-2 text-sm">
-          Don&apos;t have an account?
-          <Link className="text-primary hover:underline" href="/signup">
-            Signup
-          </Link>
-        </CardFooter>
-      </Card>
-    </div>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="john_doe@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="Enter password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button
+                  type="submit"
+                  className="w-full mt-5 cursor-pointer"
+                  loading={form.formState.isSubmitting}
+                >
+                  Login
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+          <CardFooter className="flex justify-center gap-2 text-sm">
+            Don&apos;t have an account?
+            <Link className="text-primary hover:underline" href="/signup">
+              Signup
+            </Link>
+          </CardFooter>
+        </Card>
+      </div>
+    </>
   );
 }
